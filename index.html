@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Benjamin Lazerson, Engineer</title>
+    <meta name="description" content="Benjamin Lazerson, multidisciplinary engineer (mechanical, electrical, AI/software) seeking an engineering internship in Tel Aviv." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Force the classic JSX runtime: in-browser (classic <script>) Babel cannot use the
+         automatic runtime, which emits `import {jsx} from "react/jsx-runtime"` and throws
+         "Cannot use import statement outside a module", leaving the page blank. -->
+    <script>
+      if (window.Babel && Babel.registerPreset && Babel.availablePresets && Babel.availablePresets.react) {
+        Babel.registerPreset("react-classic", {
+          presets: [[Babel.availablePresets.react, { runtime: "classic" }]]
+        });
+      }
+    </script>
+    <script type="importmap">
+    {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+      import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+      window.THREE = THREE; window.OrbitControls = OrbitControls; window.OBJLoader = OBJLoader; window.MTLLoader = MTLLoader;
+      window.__3D_READY = true; window.dispatchEvent(new Event("threeready"));
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <style>
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: #020617; }
+      .title-font { font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.01em; }
+      .hero-fade { animation: heroFade 0.7s ease; }
+      @keyframes heroFade { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: scale(1); } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script async src="models.js"></script>
+    <script type="text/babel" data-presets="react-classic">
+const { useState, useEffect, useRef } = React;
+const MEDIA = {"PupPal": [{"type": "video", "title": "AutoDoor (an automatic pet door)", "src": "media/autodoor.mp4"}, {"type": "video", "title": "KittyKlean (an automatic self-cleaning litter box)", "src": "media/kittyklean.mp4"}, {"type": "video", "title": "PupFoodi (an automatic pet food dispenser)", "src": "media/pupfoodi.mp4"}, {"type": "bundle", "title": "Linear Actuator", "items": [{"type": "video", "title": "Working demo", "src": "media/linear.mp4"}, {"type": "image", "title": "PCB schematic", "caption": "Linear actuator PCB layout", "src": "media/linear-schematic.png"}]}, {"type": "model3d", "title": "Linear Actuator PCB, 3D (drag to orbit)", "objKey": "linear"}, {"type": "bundle", "title": "Stepper Motor", "items": [{"type": "video", "title": "Working demo", "src": "media/stepper.mp4"}, {"type": "image", "title": "PCB schematic", "caption": "Stepper motor driver, schematic", "src": "media/stepper-schematic.png"}, {"type": "image", "title": "PCB layout (2D)", "caption": "Stepper motor driver, 2D PCB layout", "src": "media/stepper-2d.png"}]}, {"type": "model3d", "title": "Stepper Motor PCB, 3D (drag to orbit)", "objKey": "stepper"}, {"type": "youtube", "title": "CIJE Tank Presentation", "id": "wYQo-Mn8Am0", "start": 5988}, {"type": "image", "title": "$300 NYIT Grant", "caption": "8th Annual NYIT Mini-Research Grant Award", "src": "media/grant.png"}, {"type": "image", "title": "CIJE Tank Award", "caption": "CIJE Tank, Finalist: Comprehensive Business Plan & Research (Nov 2025)", "src": "media/cije-award.jpg"}], "Punch Pulse": [{"type": "video", "title": "Punch Pulse Demo", "startAt": 12, "src": "media/punchpulse.mp4"}], "AI / Software": [{"type": "youtube", "title": "AI-Made Short (proof of work)", "id": "aCb-p6m-db0"}, {"type": "youtube", "title": "AI-Made Short (proof of work)", "id": "s_Rs9UOjgAs"}, {"type": "website", "title": "Davie Vet Center, Website", "url": "https://davievetcenter.com"}]};
+const HERO_POOL = [].concat(MEDIA["PupPal"] || [], MEDIA["Punch Pulse"] || [], MEDIA["AI / Software"] || []).filter(function (m) { return m.type === "video" || m.type === "image"; });
+
+const PROFILE = {
+  name: "Benjamin Lazerson",
+  tagline: "Multidisciplinary Engineer, Mechanical · Electrical · AI / Software",
+  blurb: "I have experience with the electrical and mechanical sides of engineering, as well as content creation and web development. I'm now on a gap year with Torah Tech, looking to contribute to an engineering team in Tel Aviv.",
+  email: "brlazerson@gmail.com",
+  phone: "+1 954-235-6643",
+  phoneTel: "+19542356643",
+  linkedin: "https://www.linkedin.com/in/benjamin-lazerson-6626373ab/",
+  location: "Relocating to Tel Aviv, Israel, via Torah Tech gap-year program",
+};
+
+const PROJECTS = [
+  { title: "PupPal", year: "2025", badge: "CIJE Finalist · NYIT Grant", domains: ["Electrical", "Software", "Mechanical"], highlightFirst: true,
+    summary: "A connected suite of three Wi-Fi pet-care products (RFID auto door, food dispenser, self-cleaning litter box) controlled from one app and synced over ESP32s. Co-founded and led; built the food dispenser and the companion app.",
+    points: [
+      "Awarded the 8th Annual NYIT Mini-Research Grant; CIJE Florida Innovation Day Finalist; CIJE Tank (NY) 'Comprehensive Business Plan & Research' award",
+      "Networked three devices over Wi-Fi (ESP32) with an RFID collar and a single multi-pet app",
+      "Designed enclosures in Autodesk Fusion, designed PCBs/circuitry, and 3D-printed prototypes",
+    ] },
+  { title: "Punch Pulse", year: "2024", badge: "Engineering Club", domains: ["Electrical", "Mechanical"],
+    summary: "Resistance-band training technology that measures the force and speed of a user's punch using onboard sensors.",
+    points: [
+      "Integrated strain-gauge and motion sensing on Arduino-class microcontrollers",
+      "Soldered and assembled sensor/processor hardware in-house",
+      "Modeled and 3D-printed the housing in Autodesk Fusion",
+    ] },
+  { title: "AI / Software", year: "2025", badge: "Generative AI", domains: ["AI", "Software", "Video", "Web"],
+    summary: "Hands-on work with generative-AI tools, producing short-form video with AI video editors and building websites. The clip and live site below were made as proof of work.",
+    points: [
+      "Produced short-form video using AI video editors (HeyGen, Hyperframes, Remotion)",
+      "Built and deployed a live business website (davievetcenter.com)",
+      "Generated voiceovers with ElevenLabs and visuals with AI image generators; iterated with Claude, Gemini, and ChatGPT",
+    ] },
+];
+
+const SKILLS = [
+  { group: "Engineering & CAD", items: ["Autodesk Fusion (CAD)", "Fusion (Electronics / PCB)", "3D Printing (extensive hands-on)", "Bambu Studio", "Bambu 3D printer troubleshooting & repair", "Prototyping", "Soldering"] },
+  { group: "Electronics", items: ["Arduino", "ESP32", "Raspberry Pi", "Microprocessors", "RFID", "Ultrasonic / Weight / Strain-gauge sensors", "Bluetooth", "Wi-Fi"] },
+  { group: "Software & AI", items: ["AP Computer Science A (5)", "AP CS Principles (5)", "React", "Firebase", "Supabase", "MailerLite", "Webforms", "Flutter (app UI)", "Mobile app integration"] },
+  { group: "AI & Creative Tools", items: ["Claude", "Gemini", "ChatGPT", "Perplexity", "AI image generators", "Nano Banana", "HeyGen", "Higgsfield", "Hyperframes", "Remotion", "ElevenLabs", "Premiere Pro", "Photoshop", "Illustrator", "Blender"] },
+  { group: "Languages & People", items: ["English (fluent)", "Spanish (fluent)", "Public speaking", "Leadership", "Teamwork"] },
+];
+
+// Brand logos for skill chips (Simple Icons CDN). Only real companies/tools/sites get one;
+// generic skills (soldering, prototyping, leadership, etc.) intentionally have none.
+// Missing/renamed slugs fail gracefully, the <img> hides itself via onError.
+const SKILL_LOGOS = {
+  "Autodesk Fusion (CAD)": "autodesk",
+  "Fusion (Electronics / PCB)": "autodesk",
+  "Bambu Studio": "bambulab",
+  "Bambu 3D printer troubleshooting & repair": "bambulab",
+  "Arduino": "arduino",
+  "ESP32": "espressif",
+  "Raspberry Pi": "raspberrypi",
+  "Bluetooth": "bluetooth",
+  "React": "react",
+  "Firebase": "firebase",
+  "Supabase": "supabase",
+  "Flutter (app UI)": "flutter",
+  "Claude": "claude",
+  "Gemini": "googlegemini",
+  "Perplexity": "perplexity",
+  "ElevenLabs": "elevenlabs",
+  "Blender": "blender",
+  // Note: Adobe (Photoshop/Illustrator/Premiere), OpenAI/ChatGPT, MailerLite, HeyGen and
+  // Remotion are intentionally omitted here — Simple Icons removed/lacks them, so they fall
+  // through to the favicon (via SKILL_DOMAINS) which loads reliably.
+};
+// Website domains, used as a colored-favicon fallback when Simple Icons has no
+// (or has removed, e.g. Adobe / OpenAI) matching monochrome logo.
+const SKILL_DOMAINS = {
+  "Autodesk Fusion (CAD)": "autodesk.com",
+  "Fusion (Electronics / PCB)": "autodesk.com",
+  "Bambu Studio": "bambulab.com",
+  "Bambu 3D printer troubleshooting & repair": "bambulab.com",
+  "Arduino": "arduino.cc",
+  "ESP32": "espressif.com",
+  "Raspberry Pi": "raspberrypi.com",
+  "Bluetooth": "bluetooth.com",
+  "React": "react.dev",
+  "Firebase": "firebase.google.com",
+  "Supabase": "supabase.com",
+  "MailerLite": "mailerlite.com",
+  "Flutter (app UI)": "flutter.dev",
+  "Claude": "claude.ai",
+  "Gemini": "gemini.google.com",
+  "ChatGPT": "openai.com",
+  "Perplexity": "perplexity.ai",
+  "HeyGen": "heygen.com",
+  "Higgsfield": "higgsfield.ai",
+  "Remotion": "remotion.dev",
+  "ElevenLabs": "elevenlabs.io",
+  "Premiere Pro": "adobe.com",
+  "Photoshop": "adobe.com",
+  "Illustrator": "adobe.com",
+  "Blender": "blender.org",
+};
+// Prefer the clean monochrome Simple Icon; fall back to the brand's favicon.
+// The chip <img> swaps to fallback onError, then hides itself if both fail.
+const skillLogo = (name) => {
+  const d = SKILL_DOMAINS[name];
+  const si = SKILL_LOGOS[name] ? ("https://cdn.simpleicons.org/" + SKILL_LOGOS[name] + "/cbd5e1") : null;
+  const horse = d ? ("https://icon.horse/icon/" + d) : null;       // colored brand favicon (hi-res)
+  const google = d ? ("https://www.google.com/s2/favicons?sz=64&domain=" + d) : null; // last resort
+  const primary = si || horse || google;
+  if (!primary) return null;
+  const fallback = si ? (horse || google) : google;
+  return { primary: primary, fallback: fallback };
+};
+// Swap to the favicon fallback, then hide if that also fails. Note: simpleicons.org
+// answers removed/unknown slugs without an HTTP error, so a "loaded" 0-width image
+// also counts as a failure (checked via onLoad), not just onError.
+function logoFallback(img) {
+  const f = img.getAttribute("data-fallback");
+  if (f) { img.removeAttribute("data-fallback"); img.src = f; }
+  else { img.style.display = "none"; }
+}
+
+const EXPERIENCE = [
+  { role: "Co-Team Captain, Engineering Club (Competition)", org: "Posnack School", date: "Aug 2023 – Present",
+    points: ["Lead a team researching and building products that solve real-world problems", "Work daily with Arduino, ESP32, Raspberry Pi, sensors, soldering, and 3D printing", "Built PupPal and Punch Pulse; presented PupPal at CIJE Innovation Day and at CIJE Tank (NY), where it won an award"] },
+  { role: "Freelance Web Developer, Davie Vet Center", org: "Davie Vet Center, Davie, FL", date: "2025",
+    points: ["Designed, built, and shipped a production website for a family veterinary clinic of nearly 50 years: home, services, team, an interactive flip-card 'meet the team' page, and a multi-step appointment-booking flow", "Set up CI/CD (GitHub to Vercel) for instant deploys, connected the client's custom domain via DNS without breaking existing email, and built SEO from scratch (structured data, Search Console, Google and Bing indexing)", "Added spam-protected appointment requests that email the front desk, debugged real mobile layout bugs by measuring the rendered page, and handed off plain-English docs so a non-technical owner can manage it independently"] },
+  { role: "Gap-Year Participant", org: "Torah Tech, Israel", date: "2026",
+    points: ["Year-long program that places participants in professional internships", "Relocating to Israel and building toward an engineering internship in Tel Aviv"] },
+  { role: "Founder & Content Creator, BrlazerSCP", org: "YouTube", date: "Jan 2024 – Apr 2025",
+    points: ["Grew a channel to 1,100 subscribers and 186,000+ total views; earned YouTube monetization", "Built end-to-end: editing in Premiere Pro, graphics in Photoshop, 3D assets in Blender", "Stepped back to focus on engineering, entrepreneurial proof of follow-through"] },
+  { role: "Volunteer, Humanitarian Service", org: "BBYO Costa Rica · Craig's Pantry", date: "2022 – 2025",
+    points: ["Built housing and farmed sustainably with the BriBri Indigenous Community in Costa Rica", "Managed inventory and distribution at a kosher food pantry serving Broward County"] },
+];
+
+const AWARDS = ["AP Scholar Award (2025)","Principal Honors List (2025)","8th Annual NYIT Mini-Research Grant (2025)","CIJE Florida Innovation Day, Finalist (May 2025)","CIJE Tank Finalist, NY, 'Comprehensive Business Plan & Research' (Nov 2025)","RECF Pre-Engineering Certified","RECF Robotics Certified","AED / Deep-water certified (Red Cross)"];
+const AP_SCORES = [["AP Computer Science Principles","5"],["AP Computer Science A","5"],["AP Physics I","4"],["AP Physics II",""],["AP Calculus AB",""],["AP Chemistry",""],["AP Literature & Composition",""],["AP Microeconomics",""],["AP Government & Politics",""]];
+const NAV = [["About","about"],["Projects","projects"],["Skills","skills"],["Experience","experience"],["Education","education"],["Contact","contact"]];
+const RECF = [{ label: "RECF Pre-Engineering Certified", img: "media/recf-preeng.png" }, { label: "RECF Robotics Certified", img: "media/recf-robotics.png" }];
+const RECF_LOGO = "media/recf-logo.png";
+
+function useReveal() {
+  const ref = useRef(null); const [shown, setShown] = useState(false);
+  useEffect(() => { const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { setShown(true); obs.unobserve(e.target); } }), { threshold: 0.12 });
+    obs.observe(el); return () => obs.disconnect(); }, []);
+  return [ref, shown];
+}
+function Section({ id, title, kicker, children }) {
+  const [ref, shown] = useReveal();
+  return (<section id={id} className="mx-auto max-w-5xl px-6 py-20 scroll-mt-20"><div ref={ref} className={"transition-all duration-700 ease-out " + (shown ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6")}>{kicker && <p className="mb-2 text-xs font-mono uppercase tracking-[0.3em] text-cyan-400">{kicker}</p>}<h2 className="mb-10 text-3xl font-bold text-white sm:text-4xl">{title}</h2>{children}</div></section>);
+}
+
+function makeGear(THREE) {
+  const teeth=16,rO=1.0,rI=0.82,rB=0.30,d=0.42; const sh=new THREE.Shape(); const st=(Math.PI*2)/(teeth*2);
+  for(let i=0;i<teeth*2;i++){const r=(i%2===0)?rO:rI;const a=i*st,x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)sh.moveTo(x,y);else sh.lineTo(x,y);}
+  sh.closePath(); const h=new THREE.Path(); h.absarc(0,0,rB,0,Math.PI*2,true); sh.holes.push(h);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:d,bevelEnabled:true,bevelThickness:0.04,bevelSize:0.04,bevelSegments:2,steps:1}); g.center(); return g;
+}
+function Model3D({ item }) {
+  const mountRef = useRef(null);
+  const [ready, setReady] = useState(typeof window !== "undefined" && !!window.__3D_READY && !!window.__OBJ);
+  const [err, setErr] = useState(null);
+  useEffect(() => { if (ready) return; const ck=()=>{if(window.__3D_READY&&window.__OBJ)setReady(true);}; const h=ck; window.addEventListener("threeready",h); window.addEventListener("objready",h);
+    let __tries=0; const t=setInterval(()=>{__tries++;if(window.__3D_READY&&(window.__OBJ||__tries>50))setReady(true);},200); return ()=>{window.removeEventListener("threeready",h);window.removeEventListener("objready",h);clearInterval(t);}; }, [ready]);
+  useEffect(() => {
+    if (!ready || !mountRef.current) return;
+    const THREE = window.THREE, OrbitControls = window.OrbitControls;
+    const el = mountRef.current; const W2 = el.clientWidth || 480, H2 = el.clientHeight || 270;
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b1220);
+    const camera = new THREE.PerspectiveCamera(45, W2/H2, 0.01, 50000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(W2,H2); el.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x223344,1.2));
+    const d1=new THREE.DirectionalLight(0xffffff,1.3); d1.position.set(4,6,5); scene.add(d1);
+    const d2=new THREE.DirectionalLight(0x88bbff,0.6); d2.position.set(-5,-2,-4); scene.add(d2);
+    const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping=true; controls.autoRotate=true; controls.autoRotateSpeed=1.3;
+    renderer.domElement.addEventListener("pointerdown",()=>{controls.autoRotate=false;},{once:true});
+    const fb = new THREE.MeshStandardMaterial({color:0x6cc7ff,metalness:0.4,roughness:0.45});
+    const fit=(o)=>{const b=new THREE.Box3().setFromObject(o);const s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());o.position.sub(c);const m=Math.max(s.x,s.y,s.z)||1;camera.position.set(m*1.6,m*1.05,m*1.6);camera.near=m/200;camera.far=m*200;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.update();};
+    const add=(o)=>{scene.add(o);fit(o);};
+    const data = (window.__OBJ && item.objKey) ? window.__OBJ[item.objKey] : null;
+    try {
+      if (data) {
+        const loadObj=(materials)=>{const ol=new window.OBJLoader(); if(materials) ol.setMaterials(materials); ol.load(data.obj,(obj)=>{ if(!materials) obj.traverse((c)=>{if(c.isMesh)c.material=fb;}); add(obj); }, undefined, ()=>setErr("Could not load model"));};
+        if (data.mtl && window.MTLLoader){ const ml=new window.MTLLoader(); ml.load(data.mtl,(mm)=>{mm.preload();loadObj(mm);},undefined,()=>loadObj(null)); } else { loadObj(null); }
+      } else { add(new THREE.Mesh(makeGear(THREE), fb)); }
+    } catch(e){ setErr("3D error"); }
+    let raf; const loop=()=>{raf=requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);}; loop();
+    const onR=()=>{const nw=el.clientWidth,nh=el.clientHeight;if(!nw||!nh)return;camera.aspect=nw/nh;camera.updateProjectionMatrix();renderer.setSize(nw,nh);};
+    window.addEventListener("resize",onR);
+    return ()=>{cancelAnimationFrame(raf);window.removeEventListener("resize",onR);controls.dispose();renderer.dispose();if(renderer.domElement.parentNode)renderer.domElement.parentNode.removeChild(renderer.domElement);};
+  }, [ready, item]);
+  return (<div className="relative h-full w-full bg-[#0b1220]"><div ref={mountRef} className="h-full w-full" />{!ready && <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">Loading 3D viewer…</div>}{err && <div className="absolute inset-0 flex items-center justify-center text-sm text-rose-300">{err}</div>}<span className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-slate-200">drag to orbit · scroll to zoom</span></div>);
+}
+
+function MediaItem({ item, onOpen }) {
+  const ref = useRef(null); const startAt = item.startAt || 0;
+  const onMeta = () => { if (ref.current && startAt > 0) { try { ref.current.currentTime = startAt; } catch (e) {} } };
+  if (item.type === "model3d") return <Model3D item={item} />;
+  if (item.type === "youtube") {
+    const thumb = "https://img.youtube.com/vi/" + item.id + "/hqdefault.jpg";
+    const watch = "https://www.youtube.com/watch?v=" + item.id + (item.start ? "&t=" + item.start + "s" : "");
+    return (<a href={watch} target="_blank" rel="noreferrer" className="group relative block h-full w-full bg-black" title="Watch on YouTube"><img src={thumb} alt={item.title||"YouTube video"} className="h-full w-full object-cover opacity-90 transition group-hover:opacity-100" /><span className="absolute inset-0 flex items-center justify-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-2xl text-white shadow-lg transition group-hover:scale-110">▶</span></span><span className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">Watch on YouTube ↗</span></a>);
+  }
+  if (item.type === "bundle") {
+    const cols = item.items.length >= 3 ? "grid-cols-3" : "grid-cols-2";
+    return (<div className={"grid h-full w-full gap-1 bg-black p-1 " + cols}>{item.items.map((sub,k)=>(<button key={k} type="button" onClick={()=>onOpen(sub)} title={sub.title||"Open"} className="group relative overflow-hidden rounded bg-slate-900">{sub.type==="video"?<video src={sub.src} className="h-full w-full object-cover" autoPlay muted loop playsInline />:<img src={sub.src} alt={sub.title||""} className="h-full w-full object-cover" />}<span className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 transition group-hover:opacity-100"><span className="rounded-full bg-cyan-500/90 px-2 py-0.5 text-[10px] font-semibold text-slate-950">Open</span></span>{sub.title && <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[9px] text-white">{sub.title}</span>}</button>))}</div>);
+  }
+  if (item.type === "website") {
+    return (<a href={item.url} target="_blank" rel="noreferrer" title={"Visit " + item.url} className="group flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-900 to-slate-800 text-center"><span className="text-5xl">🌐</span><span className="text-sm text-slate-300">{item.url}</span><span className="rounded-lg border border-cyan-500/50 bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 transition group-hover:bg-cyan-500/20">Visit site ↗</span></a>);
+  }
+  if (item.type === "video") {
+    const src = startAt > 0 ? item.src + "#t=" + startAt : item.src;
+    return <video ref={ref} className="h-full w-full bg-black object-contain" src={src} controls playsInline preload="metadata" onLoadedMetadata={onMeta} />;
+  }
+  return (<button type="button" onClick={()=>onOpen(item)} className="group h-full w-full cursor-zoom-in" title="Click to view full size"><img src={item.src} alt={item.caption||item.name||"Project media"} className="h-full w-full bg-black object-contain transition-transform duration-300 group-hover:scale-[1.02]" /></button>);
+}
+
+function Carousel({ items, onOpen }) {
+  const [i, setI] = useState(0); const n = items.length; const startX = useRef(null);
+  if (!n) return (<div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-slate-600 bg-slate-800/40"><p className="text-sm text-slate-400">Media coming soon</p></div>);
+  const go=(d)=>setI((p)=>(p+d+n)%n);
+  const ots=(e)=>{startX.current=e.touches[0].clientX;};
+  const ote=(e)=>{if(startX.current==null)return;const dx=e.changedTouches[0].clientX-startX.current;if(dx>40)go(-1);else if(dx<-40)go(1);startX.current=null;};
+  const cur=items[i];
+  return (<div><div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-700 bg-black" onTouchStart={ots} onTouchEnd={ote}>{items.map((it,idx)=>(<div key={idx} className={"absolute inset-0 transition-opacity duration-300 " + (idx===i?"opacity-100":"pointer-events-none opacity-0")}><MediaItem item={it} onOpen={onOpen} /></div>))}{n>1 && (<React.Fragment><button onClick={()=>go(-1)} aria-label="Previous" className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-950/70 px-3 py-2 text-white backdrop-blur transition hover:bg-cyan-500 hover:text-slate-950">‹</button><button onClick={()=>go(1)} aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-950/70 px-3 py-2 text-white backdrop-blur transition hover:bg-cyan-500 hover:text-slate-950">›</button><span className="absolute right-3 top-3 rounded-full bg-slate-950/70 px-2 py-0.5 text-xs text-slate-200 backdrop-blur">{(i+1)+" / "+n}</span></React.Fragment>)}{cur.type==="image" && (<span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-950/70 px-2 py-0.5 text-[11px] text-slate-200 backdrop-blur">⤢ click to enlarge</span>)}{cur.type==="bundle" && (<span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-950/70 px-2 py-0.5 text-[11px] text-slate-200 backdrop-blur">click any tile to open</span>)}</div>{n>1 && (<div className="mt-3 flex justify-center gap-2">{items.map((_,idx)=>(<button key={idx} onClick={()=>setI(idx)} aria-label={"Go to item "+(idx+1)} className={"h-2 rounded-full transition-all " + (idx===i?"w-6 bg-cyan-400":"w-2 bg-slate-600 hover:bg-slate-400")} />))}</div>)}</div>);
+}
+
+function Lightbox({ item, onClose }) {
+  useEffect(()=>{const k=(e)=>{if(e.key==="Escape")onClose();};window.addEventListener("keydown",k);return ()=>window.removeEventListener("keydown",k);},[onClose]);
+  if (!item) return null;
+  return (<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur" onClick={onClose}><button onClick={onClose} aria-label="Close" className="absolute right-5 top-5 rounded-full border border-slate-600 bg-slate-900/80 px-4 py-2 text-slate-200 hover:border-cyan-400 hover:text-cyan-400">✕</button><div className="max-h-full max-w-5xl" onClick={(e)=>e.stopPropagation()}>{item.type==="image"?<img src={item.src} alt={item.caption||"Full size"} className="max-h-[85vh] w-auto rounded-lg" />:<video src={item.src} controls autoPlay className="max-h-[85vh] w-auto rounded-lg" />}{item.caption && <p className="mt-3 text-center text-sm text-slate-400">{item.caption}</p>}</div></div>);
+}
+
+function HeroBox({ item, onOpen }) {
+  if (!item) return null;
+  return (<button type="button" onClick={()=>onOpen(item)} title="Click to open" className="hero-fade group relative block aspect-video w-full cursor-zoom-in overflow-hidden rounded-xl border border-cyan-400/50 bg-slate-900 shadow-[0_0_28px_rgba(34,211,238,0.30)]">{item.type==="video"?<video src={item.src} className="h-full w-full object-cover" autoPlay muted loop playsInline />:<img src={item.src} alt={item.title||"Featured"} className="h-full w-full bg-black object-contain" />}{item.title && (<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-1.5 text-left"><span className="text-xs font-semibold text-white">{item.title}</span></div>)}<span className="pointer-events-none absolute right-2 top-2 rounded-full bg-slate-950/70 px-2 py-0.5 text-[10px] text-cyan-200 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">⤢ open</span></button>);
+}
+function HeroShowcase({ pool, onOpen }) {
+  const [i, setI] = useState(0);
+  useEffect(()=>{if(!pool.length)return;const t=setInterval(()=>setI((p)=>(p+1)%pool.length),5000);return ()=>clearInterval(t);},[pool.length]);
+  if (!pool.length) return null; const n=pool.length;
+  return (<div className="flex w-full flex-col gap-4"><HeroBox key={"a"+(i%n)} item={pool[i%n]} onOpen={onOpen} /><HeroBox key={"b"+((i+1)%n)} item={pool[(i+1)%n]} onOpen={onOpen} /></div>);
+}
+
+function App() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+  useEffect(()=>{const o=()=>setScrolled(window.scrollY>20);window.addEventListener("scroll",o);return ()=>window.removeEventListener("scroll",o);},[]);
+  const go=(id)=>{setMenuOpen(false);const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth"});};
+  return (
+    <div className="min-h-screen bg-slate-950 font-sans text-slate-300 antialiased selection:bg-cyan-500/30">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -top-40 left-1/4 h-96 w-96 rounded-full bg-cyan-600/20 blur-3xl" /><div className="absolute top-1/2 -right-20 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" /></div>
+      <header className={"fixed inset-x-0 top-0 z-50 transition-all duration-300 " + (scrolled ? "border-b border-slate-800 bg-slate-950/80 backdrop-blur" : "")}>
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4"><button onClick={()=>go("top")} className="font-mono text-sm font-bold tracking-tight text-white"><span className="text-cyan-400">{"<"}</span>BL<span className="text-cyan-400">{" />"}</span></button><nav className="hidden gap-7 md:flex">{NAV.map(([l,id])=>(<button key={id} onClick={()=>go(id)} className="text-sm text-slate-400 transition-colors hover:text-cyan-400">{l}</button>))}</nav><button onClick={()=>setMenuOpen((v)=>!v)} className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 md:hidden">Menu</button></div>
+        {menuOpen && (<div className="border-t border-slate-800 bg-slate-950/95 px-6 py-3 md:hidden">{NAV.map(([l,id])=>(<button key={id} onClick={()=>go(id)} className="block w-full py-2 text-left text-sm text-slate-300 hover:text-cyan-400">{l}</button>))}</div>)}
+      </header>
+      <main id="top" className="relative">
+        <section className="mx-auto flex min-h-screen max-w-5xl items-center px-6 pt-24">
+          <div className="flex w-full flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+            <div className="w-full lg:max-w-2xl">
+              <p className="mb-4 font-mono text-sm uppercase tracking-[0.3em] text-cyan-400">{PROFILE.location}</p>
+              <h1 className="text-4xl font-extrabold leading-tight text-white sm:text-6xl">{PROFILE.name}</h1>
+              <p className="mt-4 max-w-2xl text-lg font-medium text-slate-300 sm:text-xl">{PROFILE.tagline}</p>
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-400">{PROFILE.blurb}</p>
+              <div className="mt-7 flex items-center gap-4">
+                <img src={RECF_LOGO} alt="REC Foundation" className="h-20 w-20 shrink-0 rounded-lg bg-white object-contain p-1" />
+                <div className="flex flex-col gap-3">{RECF.map((c)=>(<div key={c.label} className="flex items-center gap-3"><span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">✓ {c.label}</span><button type="button" onClick={()=>setLightbox({type:"image",src:c.img,caption:c.label})} title="Click to enlarge certificate" className="h-11 w-16 shrink-0 cursor-zoom-in overflow-hidden rounded border border-slate-600 bg-white transition hover:ring-2 hover:ring-cyan-400"><img src={c.img} alt={c.label} className="h-full w-full object-contain opacity-70 transition hover:opacity-100" /></button></div>))}</div>
+              </div>
+              <div className="mt-7 flex flex-wrap gap-3"><button onClick={()=>go("projects")} className="rounded-lg bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-400">View Projects</button><a href={PROFILE.linkedin} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-400">LinkedIn</a><a href={"mailto:"+PROFILE.email} className="rounded-lg border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-400">Email Me</a></div>
+            </div>
+            <div className="w-full shrink-0 lg:w-72"><HeroShowcase pool={HERO_POOL} onOpen={setLightbox} /></div>
+          </div>
+        </section>
+
+        <Section id="about" kicker="01, Profile" title="About"><p className="max-w-3xl text-lg leading-relaxed text-slate-300">I build products that bridge mechanical design, electronics, and software. As Co-Team Captain of my school's Engineering Club, I led projects from concept through CAD, circuitry, and working prototypes, earning a research grant from NYIT and finalist placements at CIJE Innovation Day and CIJE Tank. I'm now on a gap year with Torah Tech, looking to contribute to an engineering team in Tel Aviv.</p></Section>
+
+        <Section id="projects" kicker="02, Built & Shipped" title="Featured Projects">
+          <div className="space-y-12">{PROJECTS.map((p)=>(<div key={p.title} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-7"><div className="mb-6"><Carousel items={MEDIA[p.title]||[]} onOpen={setLightbox} /></div><div className="flex items-center gap-3"><h3 className="text-2xl font-bold text-white">{p.title}</h3><span className="font-mono text-sm text-slate-500">{p.year}</span></div><p className="mt-1 inline-block rounded-md bg-cyan-500/10 px-2 py-0.5 text-xs font-medium text-cyan-300">{p.badge}</p><div className="mt-3 flex flex-wrap gap-2">{p.domains.map((d)=>(<span key={d} className="rounded border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-400">{d}</span>))}</div><p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-300">{p.summary}</p><ul className="mt-4 space-y-2">{p.points.map((pt,idx)=>{const hot=p.highlightFirst&&idx===0;return (<li key={pt} className={"flex gap-2 text-sm "+(hot?"rounded-lg bg-cyan-500/10 px-3 py-2 text-cyan-100 ring-1 ring-cyan-500/30":"text-slate-400")}><span className="mt-0.5 text-cyan-400">{hot?"★":"▹"}</span><span className={hot?"font-semibold":""}>{pt}</span></li>);})}</ul></div>))}</div>
+          <p className="mt-6 text-center text-xs text-slate-600">Swipe or use the arrows to browse each project's videos and images. Click any image to view it full size.</p>
+        </Section>
+
+        <Section id="skills" kicker="03, Toolkit" title="Skills"><div className="grid gap-5 sm:grid-cols-2">{SKILLS.map((s)=>(<div key={s.group} className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-colors hover:border-cyan-500/40"><h3 className="mb-4 font-semibold text-white">{s.group}</h3><div className="flex flex-wrap gap-2">{s.items.map((it)=>{const lg=skillLogo(it);return (<span key={it} className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/60 px-3 py-1 text-xs text-slate-300">{lg && <img src={lg.primary} data-fallback={lg.fallback||""} alt="" aria-hidden="true" loading="lazy" className="h-3.5 w-3.5 shrink-0" onError={(e)=>logoFallback(e.currentTarget)} onLoad={(e)=>{if(e.currentTarget.naturalWidth===0)logoFallback(e.currentTarget);}} />}{it}</span>);})}</div></div>))}</div></Section>
+
+        <Section id="experience" kicker="04, Track Record" title="Experience & Leadership"><div className="relative space-y-8 border-l border-slate-800 pl-8">{EXPERIENCE.map((e)=>(<div key={e.role} className="relative"><span className="absolute -left-[37px] top-1.5 h-3 w-3 rounded-full border-2 border-cyan-400 bg-slate-950" /><div className="flex flex-wrap items-baseline justify-between gap-x-4"><h3 className="text-lg font-semibold text-white">{e.role}</h3><span className="font-mono text-xs text-slate-500">{e.date}</span></div><p className="text-sm text-cyan-400">{e.org}</p><ul className="mt-2 space-y-1.5">{e.points.map((pt)=>(<li key={pt} className="flex gap-2 text-sm text-slate-400"><span className="mt-1 text-slate-600"></span><span>{pt}</span></li>))}</ul></div>))}</div></Section>
+
+        <Section id="education" kicker="05, Foundations" title="Education & Awards"><div className="grid gap-8 md:grid-cols-2"><div><div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6"><h3 className="text-lg font-semibold text-white">Posnack School</h3><p className="text-sm text-slate-400">Davie, FL · Pre-Engineering Track</p><p className="mt-1 text-sm text-slate-400">Graduating June 2026 · GPA 4.47 · ACT 32</p></div><h4 className="mb-3 mt-7 text-sm font-mono uppercase tracking-widest text-cyan-400">AP Coursework</h4><div className="overflow-hidden rounded-xl border border-slate-800">{AP_SCORES.map(([name,score],i)=>(<div key={name} className={"flex items-center justify-between px-4 py-2 text-sm "+(i%2?"bg-slate-900/30":"bg-slate-900/60")}><span className="text-slate-300">{name}</span><span className="font-mono text-cyan-400">{score}</span></div>))}</div></div><div><h4 className="mb-3 text-sm font-mono uppercase tracking-widest text-cyan-400">Awards & Certifications</h4><ul className="space-y-2.5">{AWARDS.map((a)=>(<li key={a} className="flex gap-3 rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm text-slate-300"><span className="text-cyan-400">★</span><span>{a}</span></li>))}</ul><p className="mb-2 mt-5 text-xs font-mono uppercase tracking-widest text-slate-500">Verify online</p><div className="flex flex-wrap gap-2"><a href="https://thecije.org/innovation-day-awards-2025/#1749146122415-cb3d53f2-4f39:~:text=PupPal%20%28Posnack%29" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400 hover:text-cyan-400">CIJE Innovation Day 2025 ↗</a><a href="https://thecije.org/cijetank/#:~:text=Comprehensive%20Business%20Plan%20and%20Research%20Award" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-cyan-400 hover:text-cyan-400">CIJE Tank 2025 ↗</a></div></div></div></Section>
+
+        <Section id="contact" kicker="06, Let's Talk" title="Get In Touch"><div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/30 p-8 sm:p-12"><p className="max-w-2xl text-lg text-slate-300">I'm looking for an engineering internship in Tel Aviv. If you're building something in mechanical, electrical, or AI/software, I'd love to talk.</p><div className="mt-8 flex flex-wrap gap-3"><a href={"mailto:"+PROFILE.email} className="rounded-lg bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-400">{PROFILE.email}</a><a href={PROFILE.linkedin} target="_blank" rel="noreferrer" className="rounded-lg border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-400">LinkedIn</a><a href={"tel:"+PROFILE.phoneTel} className="rounded-lg border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-cyan-400 hover:text-cyan-400">{PROFILE.phone}</a></div></div></Section>
+
+        <div className="mx-auto max-w-5xl px-6 pb-12"><p className="mb-4 text-center text-xs font-mono uppercase tracking-[0.3em] text-slate-600">Academic Stats</p><div className="grid grid-cols-3 gap-3">{[["4.47","Cumulative GPA"],["32","ACT Score"],["2 × 5","AP Computer Science"]].map(([n,label])=>(<div key={label} className="rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-center"><p className="text-xl font-bold text-slate-300 sm:text-2xl">{n}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>))}</div></div>
+
+        <footer className="border-t border-slate-900 py-8 text-center text-xs text-slate-600">© {new Date().getFullYear()} {PROFILE.name} · Built with React</footer>
+      </main>
+      <Lightbox item={lightbox} onClose={()=>setLightbox(null)} />
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
